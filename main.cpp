@@ -80,8 +80,6 @@ void quickSort(vector<entry>& a, int low, int high) {
     }
 }
 
-
-
 int main(){
     ifstream theFile("bitacora.txt");
     vector<entry> logs;
@@ -110,13 +108,16 @@ int main(){
         logs.push_back(TO);
         
     }
-
+    theFile.close();
     quickSort(logs, 0, (int)logs.size() -1);
     cout << logs.size() << "\n";
     ofstream outFile("sorted.txt");
-    for (auto &e : logs) {
+    for (auto &e : logs) 
         outFile << e.originLine << "\n";
-    }
+    outFile.close();
+
+    int month1, day1, month2, day2;
+    cin >> month1 >> day1 >> month2 >> day2; //We only need to implement this part to the search Luis
 
     return 0;
 }
