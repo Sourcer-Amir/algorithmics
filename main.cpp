@@ -53,6 +53,34 @@ long long total_time(int month, int day, int hour, int minute, int second){
     return (((((month * 31LL + day) * 24 + hour) * 60 + minute) * 60) + second);
 } 
 
+void swap(entry& a, entry& b) {
+    entry temp = a;
+    a = b;
+    b = temp;
+}
+
+int particion(vector<entry>& a, int low, int high) {
+    long long pivot = a[high].totalTime;    
+    int i = low - 1;
+    for (int j = low; j < high; ++j) {
+        if (a[j].totalTime <= pivot) {      
+            ++i;
+            swap(a[i], a[j]);               
+        }
+    }
+    swap(a[i + 1], a[high]);                
+    return i + 1;
+}
+
+void quickSort(vector<entry>& a, int low, int high) {
+    if (low < high) {
+        int p = particion(a, low, high);
+        quickSort(a, low, p - 1);
+        quickSort(a, p + 1, high);
+    }
+}
+
+
 
 int main(){
     ifstream theFile("bitacora.txt");
@@ -80,8 +108,15 @@ int main(){
         splitIp(ipPort, TO.ip1, TO.ip2, TO.ip3, TO.ip4, TO.port);
         TO.originLine = line;
         logs.push_back(TO);
+        
     }
+
+    quickSort(logs, 0, (int)logs.size() -1);
     cout << logs.size() << "\n";
+    ofstream outFile("sorted.txt");
+    for (auto &e : logs) {
+        outFile << e.originLine << "\n";
+    }
 
     return 0;
 }
