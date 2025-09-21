@@ -39,18 +39,14 @@ string tokenizer(string& line, size_t &pos){
 
 void splitIp(string &i, int &a, int &b, int &c, int &d, int &p){
     p = stoi(i.substr(i.find(":")+1)); 
-    string parts;
     int pos = 0;
-    a = stoi(i.substr(0, i.find(".")));
-    pos = i.find(".") + 1;
-    parts = i.substr(pos);
-    b = stoi(parts.substr(0, parts.find(".")));
-    pos += parts.find(".")+1;
-    parts = i.substr(pos);
-    c = stoi(parts.substr(0,parts.find(".") ));
-    pos += parts.find(".")+1;
-    parts = i.substr(pos);
-    d = stoi(parts.substr(0,parts.find(":") ));
+    a = stoi(i.substr(pos, i.find(".")));
+    pos = i.find(".") +1;
+    b = stoi(i.substr(pos, i.find(".")));
+    pos = i.find(".", pos) +1;
+    c = stoi(i.substr(pos, i.find(".")));
+    pos = i.find(".", pos) +1;
+    d = stoi(i.substr(pos, i.find(".")));
 }
 
 long long total_time(int month, int day, int hour, int minute, int second){
