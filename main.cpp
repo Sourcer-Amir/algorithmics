@@ -20,9 +20,16 @@ struct entry{
 int months_int(string& month){
     string months [12] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
     for(int i = 0; i < 12; i++)
-        if(months[i] == month) return i + 1;
+        if(months[i] == month) 
+            return i + 1;
     return -1;
 }
+
+string tokenizer(string& line, size_t &pos){
+    size_t n = line.size();
+    while (pos < n && line[pos] == ' ') ++pos;
+}
+
 
 long long primaryKey(int month, int day, int hour, int minute, int second){
     return (((((month * 31LL + day) * 24 + hour) * 60 + minute) * 60) + second);
@@ -35,7 +42,7 @@ int main(){
     vector<entry> logs;
     string line;
     while(getline(theFile,line)){
-        entry TO; //This is a temproraly object to store the data
+        entry TO; //This is a temporaly object to store the data
         size_t pos = 0; //I use this data type because the function find return this type 
 
         //TO.originLine = line;
