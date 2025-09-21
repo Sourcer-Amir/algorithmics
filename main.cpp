@@ -38,21 +38,24 @@ string tokenizer(string& line, size_t &pos){
 }
 
 void splitIp(string &i, int &a, int &b, int &c, int &d, int &p){
-    string ip = i.substr(0,i.find(":"));
-    size_t dot = i.find(".");
-    string parts = ip.substr(0,dot);
-    a = stoi(parts);
-
-    a = stoi(i.substr(0,a));
-    b = stoi(i.substr(a + 1, b - a - 1));
-    c = stoi(i.substr(b + 1));
-    d = stoi(i.substr(c + 1, p1 - c - 1));
-    p = stoi(i.substr(p1 + 1));
+    p = stoi(i.substr(i.find(":")+1)); 
+    string parts;
+    int pos = 0;
+    a = stoi(i.substr(0, i.find(".")));
+    pos = i.find(".") + 1;
+    parts = i.substr(pos);
+    b = stoi(parts.substr(0, parts.find(".")));
+    pos += parts.find(".")+1;
+    parts = i.substr(pos);
+    c = stoi(parts.substr(0,parts.find(".") ));
+    pos += parts.find(".")+1;
+    parts = i.substr(pos);
+    d = stoi(parts.substr(0,parts.find(":") ));
 }
 
 long long total_time(int month, int day, int hour, int minute, int second){
     return (((((month * 31LL + day) * 24 + hour) * 60 + minute) * 60) + second);
-} // I already know that is not a primary key, not unique, but it's pretty similar
+} 
 
 
 int main(){
@@ -60,21 +63,26 @@ int main(){
     vector<entry> logs;
     string line;
     while(getline(theFile,line)){
+
         entry TO; //This is a temporaly object to store the data
         size_t pos = 0; //I use this data type because the function find return this type 
-        string month_str = tokenizer(line,pos);
+        string month_str = tokenizer(line, pos);
         string day_str = tokenizer(line, pos);
         string time_str = tokenizer(line, pos);
+        string ipPort = tokenizer(line, pos);
+        string reason = line.substr(pos);
+        
         
         TO.month  = months_int(month_str);
         TO.day = stoi(day_str);
         TO.hour = stoi(time_str.substr(0,2));
-        TO.min = stoi(time_str.substr(3,4));
+        TO.min = stoi(time_str.substr(3,2));
         TO.sec = stoi(time_str.substr(6,2));
+
         
         TO.totalTime = total_time(TO.month, TO.day, TO.hour,  TO.min, TO.sec);
-     
-        //TO.originLine = line;
+        splitIp(ipPort, TO.ip1, TO.ip2, TO.ip3, TO.ip4, TO.port);
+        TO.originLine = line;
         logs.push_back(TO);
     }
     cout << logs.size() << "\n";
