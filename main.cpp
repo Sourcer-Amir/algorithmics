@@ -10,7 +10,7 @@ using namespace std;
 
 struct entry{
     int month, day, hour, minute, second;
-    long long primarykey; //Is not a real primary key, but it's similar Dan 
+    long long totalTime; //Is not a real primary key, but it's similar Dan 
     int ip1, ip2, ip3, ip4; //Cant be a string because we need to compare them
     int port;
     string reason; //The last part of the log entry
