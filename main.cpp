@@ -124,7 +124,7 @@ int main(){
         string time_str = tokenizer(line, pos);
         string ipPort = tokenizer(line, pos);
         string reason = line.substr(pos);
-        
+        TO.reason = reason;        
         TO.month  = months_int(month_str);
         TO.day = stoi(day_str);
         TO.hour = stoi(time_str.substr(0,2));
@@ -139,7 +139,6 @@ int main(){
     }
     theFile.close();
     quickSort(logs, 0, (int)logs.size() -1);
-    cout << logs.size() << "\n";
     ofstream outFile("sorted.txt");
     for (auto &e : logs) 
         outFile << e.originLine << "\n";
@@ -155,8 +154,11 @@ int main(){
 
     int start = lowerBoundSum(logs, sk);
     int end = upperBoundSum(logs, ek) - 1;
-    if (start < 0) start = 0;
-    if (end >= (int)logs.size()) end = (int)logs.size() - 1;
-    for (int i = start; i <= end; ++i) cout << logs[i].originLine << '\n';
+    if (start < 0) 
+        start = 0;
+    if (end >= (int)logs.size()) 
+        end = (int)logs.size() - 1;
+    for (int i = start; i <= end; ++i) 
+        cout << logs[i].originLine << '\n';
     return 0;
 }
