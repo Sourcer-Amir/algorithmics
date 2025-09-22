@@ -1,24 +1,40 @@
+/*
+    Descripción: Programa que lee un archivo de bitácora, ordena las entradas por fecha/hora
+    y permite buscar registros en un rango de fechas, además de guardar los resultados filtrados.
+
+ *Autores:
+ * [Ayleen Osnaya Ortega] - [A01426008]
+ * [José Luis Gutiérrez Quintero] - [A01739337]
+ * [Santiago Amir Rodríguez González] - [A01739942]
+    Fecha: 21/09/2025
+*/
+
 #include <iostream>
 #include <vector>
 #include <fstream>
 #include <string>
 using namespace std;
 
-// -------------------------------------------------------------
-// Estructura que representa una entrada (registro) de la bitácora
-// -------------------------------------------------------------
+
+/* ---------------- 1. ESTRUCTURA PRINCIPAL ----------------
+ * Representa un registro de bitácora.
+ * Complejidad: O(1)
+*/
 struct entry{
-    int month, day, hour, min, sec;   // Fecha y hora desglosada
-    long long totalTime;              // Clave numérica para ordenar por fecha/hora
-    int ip1, ip2, ip3, ip4;           // Octetos de la IP (para comparar punto por punto)
-    int port;                         // Puerto
-    string reason;                    // Resto del mensaje (motivo / descripción)
-    string originLine;                // Línea original tal cual (útil para imprimir)
+    int month, day, hour, min, sec; // Fecha y hora desglosada
+    long long totalTime;            // Clave numérica para ordenar por fecha/hora
+    int ip1, ip2, ip3, ip4;         // Octetos de la IP (para comparar punto por punto)
+    int port;                       // Puerto
+    string reason;                  // Resto del mensaje (motivo / descripción)
+    string originLine;              // Línea original tal cual (útil para imprimir)
 };
 
-// -------------------------------------------------------------
-// Convierte el nombre del mes (ej. "Jan") a número (1..12)
-// -------------------------------------------------------------
+// ---------------- 2. FUNCIONES AUXILIARES ----------------
+/*
+ * 2.1 months_int
+ * Función que convierte el nombre del mes a un número (1-12).
+ * Complejidad: O(1)
+ */
 int months_int(string& month){
     string months [12] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
     for(int i = 0; i < 12; i++)
@@ -27,10 +43,13 @@ int months_int(string& month){
     return -1; // devuelve -1 si el mes no es válido (no debería ocurrir si el archivo está bien formado)
 }
 
-// -------------------------------------------------------------
-// Tokenizador sencillo: extrae el siguiente token separado por espacios
-// pos es la posición de inicio y se actualiza para la siguiente llamada
-// -------------------------------------------------------------
+/*
+ * 2.2 tokenizer
+ *Tokenizador sencillo: extrae el siguiente token separado por espacios
+ * pos es la posición de inicio y se actualiza para la siguiente llamada
+ * Complejidad: O(n) en el peor caso → depende de la longitud de la línea.
+ */
+
 string tokenizer(string& line, size_t &pos){
     size_t n = line.size();
     while (pos < n && line[pos] == ' ') 
@@ -43,40 +62,47 @@ string tokenizer(string& line, size_t &pos){
     return line.substr(start, pos - start);
 }
 
-// -------------------------------------------------------------
-// Divide una cadena "ip:port" en sus componentes numéricos
-// Recibe el string i (ej. "192.168.0.1:8080") y llena a,b,c,d,p
-// -------------------------------------------------------------
-void splitIp(string &i, int &a, int &b, int &c, int &d, int &p){
-    // obtener puerto (todo lo que va después de ':')
-    p = stoi(i.substr(i.find(":")+1)); 
+/*
+ * 2.3 splitIp
+ * Divide una cadena "ip:port" en sus componentes numéricos
+ * Recibe el string i y llena a,b,c,d,p
+ * Complejidad: O(1) 
+ */
 
-    // extraer cada octeto usando posiciones relativas
-    int pos = 0;
-    a = stoi(i.substr(pos, i.find(".")));             // primer octeto desde inicio
-    pos = i.find(".") + 1;
-    b = stoi(i.substr(pos, i.find(".")));             // segundo octeto (busca primer '.' desde pos)
-    pos = i.find(".", pos) + 1;
-    c = stoi(i.substr(pos, i.find(".")));             // tercer octeto
-    pos = i.find(".", pos) + 1;
-    d = stoi(i.substr(pos, i.find(".")));             // cuarto octeto (termina antes de ':' en la práctica)
+void splitIp(string &i, int &a, int &b, int &c, int &d, int &p){
+    size_t colon = i.find(':'); // Buscar ':'
+    p = stoi(i.substr(colon + 1)); // Puerto
+    string ip = i.substr(0, colon); // IP
+    int *oct = &a;
+    size_t pos = 0;
+    for (int k = 0; k < 3; ++k) {
+        size_t next = ip.find('.', pos);
+        oct[k] = stoi(ip.substr(pos, next - pos)); // oct[0]=a, oct[1]=b, oct[2]=c
+        pos = next + 1;
+    }
+    d = stoi(ip.substr(pos)); // último octeto
 }
 
-// -------------------------------------------------------------
-// Calcula una clave numérica a partir de fecha y hora
-// (usa 31 días por mes, conforme a la suposición del enunciado)
-// -------------------------------------------------------------
+/*
+ * 2.5 TotalTime
+ * Calcula una clave numérica a partir de fecha y hora (segundos relativos)
+ * Usa 31 días por mes, conforme a la suposición del enunciado
+ * Complejidad: O(1).
+ */
+
 long long total_time(int month, int day, int hour, int minute, int second){
     return (((((month * 31LL + day) * 24 + hour) * 60 + minute) * 60) + second);
 } 
 
-// -------------------------------------------------------------
-// Comparador que aplica el orden requerido:
-// 1) totalTime (fecha/hora)
-// 2) ip1, ip2, ip3, ip4 (octeto por octeto)
-// 3) port
-// 4) reason (cadena) como desempate final
-// -------------------------------------------------------------
+/* -------------------------------------------------------------
+ * 2.6 lessEntry
+ * Comparador que aplica el orden requerido:
+ * 1) totalTime (fecha/hora)
+ * 2) ip1, ip2, ip3, ip4 (octeto por octeto)
+ * 3) port
+ * 4) reason (cadena) como desempate final
+ * complejidad: O(n).
+  -------------------------------------------------------------*/
 bool lessEntry(const entry &A, const entry &B) {
     if (A.totalTime != B.totalTime) 
         return A.totalTime < B.totalTime;
@@ -91,21 +117,33 @@ bool lessEntry(const entry &A, const entry &B) {
     if (A.port != B.port) 
         return A.port < B.port;
     return A.reason < B.reason;
-} // With this function we will compare the Ip plus the totaltime
+}
 
-// -------------------------------------------------------------
-// Swap simple para intercambiar dos entries (utilizado por quicksort)
-// -------------------------------------------------------------
+
+// ---------------- 3. QUICK SORT ----------------
+/*
+ * Implementación del algoritmo QuickSort para ordenar las entradas.
+ * Complejidad: O(n log n) en promedio, O(n^2) en el peor caso.
+ */
+ 
+/*-------------------------------------------------------------
+ * 3.1 Swap 
+ * simple para intercambiar dos entries (utilizado por quicksort)
+ * complejidad: O(n).
+  -------------------------------------------------------------*/
 void swap(entry& a, entry& b) {
     entry temp = a;
     a = b;
     b = temp;
 }
 
-// -------------------------------------------------------------
-// Partición estilo Lomuto para quicksort sobre vector<entry>
-// Se usa lessEntry para comparar registros según la prioridad definida
-// -------------------------------------------------------------
+/* -------------------------------------------------------------
+ * 3.2 Partición 
+ * estilo Lomuto para quicksort sobre vector<entry>
+ * Se usa lessEntry para comparar registros según la prioridad definida.
+ * Devuelve índice del pivote
+ * complejidad: O(n).
+  -------------------------------------------------------------*/
 int particion(vector<entry>& a, int low, int high) {
     entry pivot = a[high];
     int i = low - 1;
@@ -119,9 +157,11 @@ int particion(vector<entry>& a, int low, int high) {
     return i + 1;
 }
 
-// -------------------------------------------------------------
-// Quicksort recursivo usando particion de Lomuto
-// -------------------------------------------------------------
+/* -------------------------------------------------------------
+ * 3.3 Quicksort
+ * Quicksort recursivo usando particion de Lomuto
+ * complejidad: O(n^2)
+  -------------------------------------------------------------*/
 void quickSort(vector<entry>& a, int low, int high) {
     if (low < high) {
         int p = particion(a, low, high);
@@ -130,11 +170,15 @@ void quickSort(vector<entry>& a, int low, int high) {
     }
 }
 
-// -------------------------------------------------------------
-// Búsquedas binarias para encontrar límites por totalTime
-// lowerBoundSum -> primera posición con totalTime >= thetime
-// upperBoundSum -> primera posición con totalTime > thetime
-// -------------------------------------------------------------
+// ---------------- 4. BÚSQUEDAS ----------------
+
+/* -------------------------------------------------------------
+ * 4.1 lowerBoundSum
+ * Búsquedas binarias para encontrar límites por totalTime
+ * lowerBoundSum -> primera posición con totalTime >= thetime
+ * upperBoundSum -> primera posición con totalTime > thetime
+ * complejidad: O(log n).
+  -------------------------------------------------------------*/
 int lowerBoundSum(const vector<entry> &v, long long thetime) { 
     int l = 0, r = (int)v.size();
     while (l < r) {
@@ -145,6 +189,13 @@ int lowerBoundSum(const vector<entry> &v, long long thetime) {
     return l;
 } //Binary search to find the lower bound 
 
+
+/*
+ * 4.2 upperBoundSum
+ * Devuelve el índice del primer registro con totalTime > thetime
+ * Complejidad: O(log n)
+ */
+ 
 int upperBoundSum(const vector<entry> &v, long long thetime) {
     int l = 0, r = (int)v.size();
     while (l < r) {
@@ -155,16 +206,20 @@ int upperBoundSum(const vector<entry> &v, long long thetime) {
     return l;
 } //Binary search to find the upper bound 
 
-// -------------------------------------------------------------
-// Función principal
-// 1) Lee bitacora.txt línea por línea
-// 2) Parsea tokens (mes, día, hora, ip:port, razón)
-// 3) Calcula totalTime y divide la IP en octetos
-// 4) Inserta registros en logs
-// 5) Ordena con quickSort usando la comparación definida
-// 6) Escribe sorted.txt con las líneas ordenadas
-// 7) Lee rango de fechas desde stdin y muestra registros en ese rango
-// -------------------------------------------------------------
+
+/* ---------------- 5. FUNCIÓN PRINCIPAL ---------------- 
+
+/* -------------------------------------------------------------
+ * Función principal
+ * 1) Lee bitacora.txt línea por línea
+ * 2) Parsea tokens (mes, día, hora, ip:port, razón)
+ * 3) Calcula totalTime y divide la IP en octetos
+ * 4) Inserta registros en logs
+ * 5) Ordena con quickSort usando la comparación definida
+ * 6) Escribe sorted.txt con las líneas ordenadas
+ * 7) Lee rango de fechas desde stdin y muestra registros en ese rango
+ * complejidad: O(n^2)
+  -------------------------------------------------------------*/
 int main(){
     ifstream theFile("bitacora.txt");
     vector<entry> logs;
@@ -203,9 +258,13 @@ int main(){
 
     // Escribir todos los registros ordenados en sorted.txt (misma estructura que la entrada)
     ofstream outFile("sorted.txt");
-    for (auto &e : logs) 
-        outFile << e.originLine << "\n";
-    outFile.close();
+    for (size_t i = 0; i < logs.size(); i++) {
+        outFile << logs[i].originLine;
+        if (i < logs.size() - 1) {  // Solo añade una nueva línea si no es la última entrada.
+         outFile << "\n";
+        }
+    }
+    outFile.close(); 
 
     // Lectura de rango de fechas desde stdin (para pruebas automáticas)
     int sm, sd, em, ed;
